@@ -24,7 +24,7 @@ let chessboardState = [
   Array(8).fill("Pb"),
   ...Array.from({ length: 4 }, () => Array(8).fill("")),
   Array(8).fill("Pw"),
-  ["Rw", "Nw", "Bw", "Qw", "Kw", "Nw", "Bw", "Rw"],
+  ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
 ];
 
 function getNotation(row, col) {
