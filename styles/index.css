@@ -24,6 +24,9 @@
   place-items: center;
   overflow: hidden;
   font-size: calc(min(90vw, 600px) / 9 * 0.9);
+
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .light-square {
@@ -40,6 +43,14 @@
   paint-order: stroke fill;
   line-height: 1;
   user-select: none;
+
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.piece.selected {
+  outline: 3px solid #2563eb;
+  background-color: #93c5fd;
 }
 
 .light-piece {

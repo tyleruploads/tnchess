@@ -1,5 +1,15 @@
 const chessboardDiv = document.getElementById("chessboard");
 
+let squares = null;
+let selectedSquare = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  drawBoard();
+  drawPieces();
+
+  squares = document.querySelectorAll(".square");
+});
+
 const PIECE_SYMBOLS = {
   K: "\u265A\uFE0E",
   Q: "\u265B\uFE0E",
@@ -58,6 +68,29 @@ function drawBoard() {
     square.setAttribute("data-row", row);
     square.setAttribute("data-col", col);
 
+    square.addEventListener("click", () => {
+      const piece = square.querySelector(".piece");
+
+      if (!selectedSquare && !piece) return;
+
+      if (square === selectedSquare) {
+        clearHighlights();
+        selectedSquare = null;
+        return;
+      }
+
+      if (selectedSquare) {
+        movePiece(selectedSquare, square);
+        clearHighlights();
+        selectedSquare = null;
+        return;
+      }
+
+      clearHighlights();
+      selectedSquare = square;
+      piece.classList.add("selected");
+    });
+
     chessboardDiv.appendChild(square);
   }
 }
@@ -84,7 +117,28 @@ function drawPieces() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  drawBoard();
-  drawPieces();
-});
+function clearHighlights() {
+  squares.forEach((sq) => {
+    const piece = sq.querySelector(".piece");
+    if (piece) piece.classList.remove("selected");
+  });
+}
+
+function movePiece(fromSquare, toSquare) {
+  const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
+  const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
+  const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
+  const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
+
+  chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
+  chessboardState[fromRow][fromCol] = "";
+
+  const fromPiece = fromSquare.querySelector(".piece");
+
+  if (!fromPiece) return;
+
+  const toPiece = toSquare.querySelector(".piece");
+  if (toPiece) toPiece.remove();
+
+  toSquare.appendChild(fromPiece);
+}
