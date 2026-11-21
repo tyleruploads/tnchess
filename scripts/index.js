@@ -80,6 +80,15 @@ function drawBoard() {
       }
 
       if (selectedSquare) {
+        if (!validateMove(selectedSquare, square)) {
+          if (piece) {
+            clearHighlights();
+            selectedSquare = square;
+            piece.classList.add("selected");
+          }
+          return;
+        }
+
         movePiece(selectedSquare, square);
         clearHighlights();
         selectedSquare = null;
@@ -122,6 +131,59 @@ function clearHighlights() {
     const piece = sq.querySelector(".piece");
     if (piece) piece.classList.remove("selected");
   });
+}
+
+function validateMove(fromSquare, toSquare) {
+  const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
+  const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
+  const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
+  const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
+
+  const pieceCode = chessboardState[fromRow][fromCol];
+  const pieceType = pieceCode.charAt(0);
+
+  const rowDiff = toRow - fromRow;
+  const colDiff = toCol - fromCol;
+
+  if (rowDiff === 0 && colDiff === 0) return false;
+
+  const fromPiece = chessboardState[fromRow][fromCol];
+  const toPiece = chessboardState[toRow][toCol];
+
+  if (toPiece !== "") {
+    const fromColor = fromPiece.charAt(1);
+    const toColor = toPiece.charAt(1);
+    if (fromColor === toColor) {
+      return false;
+    }
+
+    if (toPiece.charAt(0) === "K") {
+      return false;
+    }
+  }
+
+  switch (pieceType) {
+    case "R":
+      return (rowDiff === 0 || colDiff === 0);
+    case "B":
+      return Math.abs(rowDiff) === Math.abs(colDiff);
+    case "N":
+      return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) ||
+             (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+    case "Q":
+      return (rowDiff === 0 || colDiff === 0) || (Math.abs(rowDiff) === Math.abs(colDiff));
+    case "K":
+      return (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1);
+    case "P":
+      const dir = pieceCode.endsWith("w") ? -1 : 1;
+      const rDiff = toRow - fromRow
+      const cDiff = Math.abs(toCol - fromCol);
+      const isForward = cDiff === 0 && (rDiff === dir || (rDiff === dir * 2 && fromRow === (dir === -1 ? 6 : 1)));
+      const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
+      return isForward || isDiagonal;
+    default:
+      return false;
+  }
 }
 
 function movePiece(fromSquare, toSquare) {
