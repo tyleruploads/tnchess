@@ -10,6 +10,16 @@
   --piece-light: #ffffff;
   --piece-dark: #262320;
 
+  --status-text-active: #fff9f0;
+  --status-text-muted: #d5c5b5;
+
+  --white-status-color: #96775d;
+  --black-status-color: #4a382b;
+
+  --dot-inactive: #736051;
+  --dot-active: #84cc16;
+  --dot-active-flow: rgba(132, 204, 22, 0.45);
+
   --highlight-select: rgba(56, 189, 248, 0.4);
 
   --text-main: #f3f4f6;
@@ -48,7 +58,7 @@ body {
 
 #turn-indicator {
   background-color: var(--text-main);
-  color: var(--bg-color);
+  color: var(--background-color);
   margin-top: 10px;
   margin-bottom: auto;
   min-width: 111.534px;
@@ -75,6 +85,66 @@ body {
 
 h1 {
   color: var(--text-main);
+}
+
+#game-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: fit-content;
+  padding: 8px 16px;
+}
+
+.player-info.white-player {
+  background-color: var(--white-status-color);
+}
+
+.player-info.black-player {
+  background-color: var(--black-status-color);
+}
+
+.turn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--dot-inactive);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.player-info .player-name,
+.player-info .net-material {
+  color: var(--status-text-muted);
+}
+
+.player-info.active .turn-dot {
+  background-color: var(--dot-active);
+  box-shadow: 0 0 8px var(--dot-active-glow);
+}
+
+.player-info.active .player-name,
+.player-info.active .net-material {
+  color: var(--status-text-active);
+  font-weight: 600;
+}
+
+.info-pieces-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.info-pieces-container span {
+  transform: translateY(-3px);
+  margin-right: -0.15em;
 }
 
 #chessboard {
@@ -142,6 +212,12 @@ h1 {
   color: var(--piece-dark);
   -webkit-text-stroke: 0.5px rgba(240, 217, 181, 0.4);
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+}
+
+.captured-piece {
+  -webkit-text-stroke-width: 0.5px;
+  font-size: clamp(14px, 3vw, 24px);
+  line-height: 1;
 }
 
 @media (max-width: 768px) {

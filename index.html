@@ -12,7 +12,21 @@
     <div id="mainDiv">
       <h1>TNChess</h1>
       <div class="horizontal-align">
-        <div id="chessboard"></div>
+        <div id="game-container">
+          <div class="player-info black-player">
+            <span class="turn-dot"></span>
+            <span class="net-material">0</span>
+            <span class="player-name">Black</span>
+            <div class="info-pieces-container"></div>
+          </div>
+          <div id="chessboard"></div>
+          <div class="player-info white-player">
+            <span class="turn-dot"></span>
+            <span class="net-material">0</span>
+            <span class="player-name">White</span>
+            <div class="info-pieces-container"></div>
+          </div>
+        </div>
 
         <div id="rightPanel">
           <div id="turn-indicator"><span>White to Move</span></div>

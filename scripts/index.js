@@ -2,10 +2,30 @@ const chessboardDiv = document.getElementById("chessboard");
 const newGameButton = document.getElementById("newGameButton");
 const turnIndicator = document.querySelector("#turn-indicator > span");
 
+const whiteInfoBar = document.querySelector(".player-info.white-player");
+const blackInfoBar = document.querySelector(".player-info.black-player");
+
+const whiteNetMaterialEl = document.querySelector(
+  ".player-info.white-player .net-material",
+);
+const blackNetMaterialEl = document.querySelector(
+  ".player-info.black-player .net-material",
+);
+
+const whiteCapturedPiecesDiv = document.querySelector(
+  ".player-info.white-player .info-pieces-container",
+);
+const blackCapturedPiecesDiv = document.querySelector(
+  ".player-info.black-player .info-pieces-container",
+);
+
 let squares = null;
 let selectedSquare = null;
 
 let chessboardState = null;
+
+let whiteCapturedPieces = [];
+let blackCapturedPieces = [];
 
 let currentTurn = "w";
 
@@ -22,6 +42,14 @@ const PIECE_SYMBOLS = {
   P: "\u265F\uFE0E",
 };
 
+const PIECE_VALUES = {
+  P: 1,
+  N: 3,
+  B: 3,
+  R: 5,
+  Q: 9,
+};
+
 function startGame() {
   chessboardState = [
     ["Rb", "Nb", "Bb", "Qb", "Kb", "Bb", "Nb", "Rb"],
@@ -31,9 +59,14 @@ function startGame() {
     ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
   ];
   currentTurn = "w";
+  whiteCapturedPieces = [];
+  blackCapturedPieces = [];
 
   drawBoard();
   drawPieces();
+  drawMaterial();
+
+  whiteInfoBar.classList.add("active");
 
   squares = document.querySelectorAll(".square");
 }
@@ -61,6 +94,10 @@ function getPieceColorClass(pieceCode) {
   }
 
   return pieceColor === "w" ? "light-piece" : "dark-piece";
+}
+
+function getMaterialValue(pieces) {
+  return pieces.reduce((total, piece) => total + (PIECE_VALUES[piece] ?? 0), 0);
 }
 
 function drawBoard() {
@@ -156,6 +193,47 @@ function drawPieces() {
   }
 }
 
+function drawMaterial() {
+  const groups = [
+    {
+      type: "dark-piece",
+      pieces: whiteCapturedPieces,
+      container: whiteCapturedPiecesDiv,
+    },
+    {
+      type: "light-piece",
+      pieces: blackCapturedPieces,
+      container: blackCapturedPiecesDiv,
+    },
+  ];
+
+  const points = {
+    white: 0,
+    black: 0,
+  };
+
+  for (const { type, pieces, container } of groups) {
+    container.replaceChildren();
+    if (pieces === null) continue;
+
+    let pointsTarget = type === "dark-piece" ? "white" : "black";
+
+    points[pointsTarget] = getMaterialValue(pieces);
+
+    for (const pieceType of pieces) {
+      const pieceEl = document.createElement("span");
+
+      pieceEl.classList.add("captured-piece", type);
+      pieceEl.textContent = PIECE_SYMBOLS[pieceType];
+
+      container.appendChild(pieceEl);
+    }
+  }
+
+  whiteNetMaterialEl.textContent = points["white"] - points["black"];
+  blackNetMaterialEl.textContent = points["black"] - points["white"];
+}
+
 function clearHighlights() {
   squares.forEach((sq) => {
     const piece = sq.querySelector(".piece");
@@ -235,14 +313,30 @@ function movePiece(fromSquare, toSquare) {
   const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
   const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
 
+  const toPieceCode = chessboardState[toRow][toCol];
+
+  if (toPieceCode) {
+    const toPieceType = toPieceCode.charAt(0);
+    const toPieceColor = toPieceCode.charAt(1);
+
+    const capturedPieces =
+      toPieceColor === "w" ? blackCapturedPieces : whiteCapturedPieces;
+
+    capturedPieces.push(toPieceType);
+  }
+
   chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
   chessboardState[fromRow][fromCol] = "";
 
   drawPieces();
+  drawMaterial();
 
   currentTurn = currentTurn === "w" ? "b" : "w";
 
   const indicatorText = currentTurn === "w" ? "White to Move" : "Black to Move";
+
+  whiteInfoBar.classList.toggle("active", currentTurn === "w");
+  blackInfoBar.classList.toggle("active", currentTurn === "b");
 
   turnIndicator.textContent = indicatorText;
 }
