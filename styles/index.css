@@ -39,15 +39,30 @@ body {
   border: 6px solid var(--border-card);
 }
 
+#rightPanel > * {
+  border: 4px solid var(--piece-dark);
+  border-radius: 4px;
+  font-size: 1rem;
+  padding: 5px;
+}
+
+#turn-indicator {
+  background-color: var(--text-main);
+  color: var(--bg-color);
+  margin-top: 10px;
+  margin-bottom: auto;
+  min-width: 111.534px;
+  text-align: center;
+}
+
 #rightPanel button {
   background-color: var(--square-dark);
   border: 4px solid var(--piece-dark);
-  border-radius: 4px;
   color: var(--text-main);
   width: 110px;
   height: 50px;
-  font-size: 1rem;
   cursor: pointer;
+  margin-bottom: auto;
 }
 
 .horizontal-align {

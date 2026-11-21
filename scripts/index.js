@@ -1,10 +1,13 @@
 const chessboardDiv = document.getElementById("chessboard");
 const newGameButton = document.getElementById("newGameButton");
+const turnIndicator = document.querySelector("#turn-indicator > span");
 
 let squares = null;
 let selectedSquare = null;
 
 let chessboardState = null;
+
+let currentTurn = "w";
 
 document.addEventListener("DOMContentLoaded", startGame);
 
@@ -27,6 +30,8 @@ function startGame() {
     Array(8).fill("Pw"),
     ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
   ];
+  currentTurn = "w";
+
   drawBoard();
   drawPieces();
 
@@ -87,20 +92,38 @@ function drawBoard() {
       }
 
       if (selectedSquare) {
-        if (!validateMove(selectedSquare, square)) {
-          if (piece) {
+        const fromRow = selectedSquare.getAttribute("data-row");
+        const fromCol = selectedSquare.getAttribute("data-col");
+        const pieceCode = chessboardState[fromRow][fromCol];
+
+        if (pieceCode.charAt(1) !== currentTurn) return;
+
+        if (validateMove(selectedSquare, square)) {
+          movePiece(selectedSquare, square);
+          clearHighlights();
+          selectedSquare = null;
+          return;
+        }
+
+        if (piece) {
+          const toRow = square.getAttribute("data-row");
+          const toCol = square.getAttribute("data-col");
+          const toPieceCode = chessboardState[toRow][toCol];
+
+          if (toPieceCode.charAt(1) === currentTurn) {
             clearHighlights();
             selectedSquare = square;
             piece.classList.add("selected");
           }
-          return;
         }
-
-        movePiece(selectedSquare, square);
-        clearHighlights();
-        selectedSquare = null;
         return;
       }
+
+      const row = square.getAttribute("data-row");
+      const col = square.getAttribute("data-col");
+      const pieceCode = chessboardState[row][col];
+
+      if (pieceCode.charAt(1) !== currentTurn) return;
 
       clearHighlights();
       selectedSquare = square;
@@ -157,9 +180,13 @@ function validateMove(fromSquare, toSquare) {
   const fromPiece = chessboardState[fromRow][fromCol];
   const toPiece = chessboardState[toRow][toCol];
 
+  const fromColor = fromPiece.charAt(1);
+
+  if (fromColor !== currentTurn) return false;
+
   if (toPiece !== "") {
-    const fromColor = fromPiece.charAt(1);
     const toColor = toPiece.charAt(1);
+
     if (fromColor === toColor) {
       return false;
     }
@@ -212,4 +239,10 @@ function movePiece(fromSquare, toSquare) {
   chessboardState[fromRow][fromCol] = "";
 
   drawPieces();
+
+  currentTurn = currentTurn === "w" ? "b" : "w";
+
+  const indicatorText = currentTurn === "w" ? "White to Move" : "Black to Move";
+
+  turnIndicator.textContent = indicatorText;
 }
