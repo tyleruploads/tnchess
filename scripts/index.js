@@ -133,12 +133,5 @@ function movePiece(fromSquare, toSquare) {
   chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
   chessboardState[fromRow][fromCol] = "";
 
-  const fromPiece = fromSquare.querySelector(".piece");
-
-  if (!fromPiece) return;
-
-  const toPiece = toSquare.querySelector(".piece");
-  if (toPiece) toPiece.remove();
-
-  toSquare.appendChild(fromPiece);
+  drawPieces();
 }
