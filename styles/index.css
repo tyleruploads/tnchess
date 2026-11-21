@@ -1,5 +1,7 @@
 :root {
   --bg-page: #1c1917;
+  --card: #34302e;
+  --border-card: #44403c;
   --border-board: #4a2b23;
 
   --square-light: #f0d9b5;
@@ -22,6 +24,37 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+#rightPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  width: 20vw;
+  height: 70vh;
+  background-color: var(--card);
+  border: 6px solid var(--border-card);
+}
+
+#rightPanel button {
+  background-color: var(--square-dark);
+  border: 4px solid var(--piece-dark);
+  border-radius: 4px;
+  color: var(--text-main);
+  width: 110px;
+  height: 50px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.horizontal-align {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2vw;
 }
 
 h1 {

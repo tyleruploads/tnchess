@@ -1,14 +1,14 @@
 const chessboardDiv = document.getElementById("chessboard");
+const newGameButton = document.getElementById("newGameButton");
 
 let squares = null;
 let selectedSquare = null;
 
-document.addEventListener("DOMContentLoaded", () => {
-  drawBoard();
-  drawPieces();
+let chessboardState = null;
 
-  squares = document.querySelectorAll(".square");
-});
+document.addEventListener("DOMContentLoaded", startGame);
+
+newGameButton.addEventListener("click", startGame);
 
 const PIECE_SYMBOLS = {
   K: "\u265A\uFE0E",
@@ -19,13 +19,19 @@ const PIECE_SYMBOLS = {
   P: "\u265F\uFE0E",
 };
 
-let chessboardState = [
-  ["Rb", "Nb", "Bb", "Qb", "Kb", "Bb", "Nb", "Rb"],
-  Array(8).fill("Pb"),
-  ...Array.from({ length: 4 }, () => Array(8).fill("")),
-  Array(8).fill("Pw"),
-  ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
-];
+function startGame() {
+  chessboardState = [
+    ["Rb", "Nb", "Bb", "Qb", "Kb", "Bb", "Nb", "Rb"],
+    Array(8).fill("Pb"),
+    ...Array.from({ length: 4 }, () => Array(8).fill("")),
+    Array(8).fill("Pw"),
+    ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
+  ];
+  drawBoard();
+  drawPieces();
+
+  squares = document.querySelectorAll(".square");
+}
 
 function getNotation(row, col) {
   const files = "abcdefgh";
@@ -53,6 +59,7 @@ function getPieceColorClass(pieceCode) {
 }
 
 function drawBoard() {
+  chessboardDiv.replaceChildren();
   for (let i = 0; i < 64; ++i) {
     const row = Math.floor(i / 8);
     const col = i % 8;
@@ -164,21 +171,30 @@ function validateMove(fromSquare, toSquare) {
 
   switch (pieceType) {
     case "R":
-      return (rowDiff === 0 || colDiff === 0);
+      return rowDiff === 0 || colDiff === 0;
     case "B":
       return Math.abs(rowDiff) === Math.abs(colDiff);
     case "N":
-      return (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) ||
-             (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2);
+      return (
+        (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) ||
+        (Math.abs(rowDiff) === 1 && Math.abs(colDiff) === 2)
+      );
     case "Q":
-      return (rowDiff === 0 || colDiff === 0) || (Math.abs(rowDiff) === Math.abs(colDiff));
+      return (
+        rowDiff === 0 ||
+        colDiff === 0 ||
+        Math.abs(rowDiff) === Math.abs(colDiff)
+      );
     case "K":
-      return (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1);
+      return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
     case "P":
       const dir = pieceCode.endsWith("w") ? -1 : 1;
-      const rDiff = toRow - fromRow
+      const rDiff = toRow - fromRow;
       const cDiff = Math.abs(toCol - fromCol);
-      const isForward = cDiff === 0 && (rDiff === dir || (rDiff === dir * 2 && fromRow === (dir === -1 ? 6 : 1)));
+      const isForward =
+        cDiff === 0 &&
+        (rDiff === dir ||
+          (rDiff === dir * 2 && fromRow === (dir === -1 ? 6 : 1)));
       const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
       return isForward || isDiagonal;
     default:
