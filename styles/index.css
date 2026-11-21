@@ -32,8 +32,9 @@ body {
   justify-content: center;
   align-items: center;
 
-  width: 20vw;
-  height: 70vh;
+  width: 180px;
+  flex-shrink: 0;
+  height: 600px;
   background-color: var(--card);
   border: 6px solid var(--border-card);
 }
@@ -71,6 +72,7 @@ h1 {
   border: 6px solid var(--border-board);
   border-radius: 4px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+  flex-shrink: 0;
 }
 
 .square {
