@@ -241,6 +241,17 @@ function clearHighlights() {
   });
 }
 
+function findKing(color) {
+  const kingCode = `K${color}`;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (chessboardState[r][c] === kingCode) {
+        return { row: r, col: c };
+      }
+    }
+  }
+}
+
 function isBlocked(fromRow, fromCol, toRow, toCol) {
   const rowStep = Math.sign(toRow - fromRow);
   const colStep = Math.sign(toCol - fromCol);
@@ -253,15 +264,22 @@ function isBlocked(fromRow, fromCol, toRow, toCol) {
   ).some(Boolean);
 }
 
-function validateMove(fromSquare, toSquare) {
-  const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
-  const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
-  const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
-  const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
+function isSquareAttacked(row, col, enemyColor) {
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const pieceCode = chessboardState[r][c];
+      if (pieceCode !== "" && pieceCode.endsWith(enemyColor)) {
+        if (canPieceAttack(r, c, row, col)) {
+          return true;
+        }
+      }
+    }
+  }
 
-  const pieceCode = chessboardState[fromRow][fromCol];
-  const pieceType = pieceCode.charAt(0);
+  return false;
+}
 
+function canPieceAttack(fromRow, fromCol, toRow, toCol) {
   const rowDiff = toRow - fromRow;
   const colDiff = toCol - fromCol;
 
@@ -270,21 +288,7 @@ function validateMove(fromSquare, toSquare) {
   const fromPiece = chessboardState[fromRow][fromCol];
   const toPiece = chessboardState[toRow][toCol];
 
-  const fromColor = fromPiece.charAt(1);
-
-  if (fromColor !== currentTurn) return false;
-
-  if (toPiece !== "") {
-    const toColor = toPiece.charAt(1);
-
-    if (fromColor === toColor) {
-      return false;
-    }
-
-    if (toPiece.charAt(0) === "K") {
-      return false;
-    }
-  }
+  const pieceType = fromPiece.charAt(0);
 
   switch (pieceType) {
     case "R":
@@ -312,19 +316,83 @@ function validateMove(fromSquare, toSquare) {
     case "K":
       return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
     case "P":
-      const dir = pieceCode.endsWith("w") ? -1 : 1;
-      const rDiff = toRow - fromRow;
-      const cDiff = Math.abs(toCol - fromCol);
-      const isForward =
-        cDiff === 0 &&
-        (rDiff === dir ||
-          (rDiff === dir * 2 && fromRow === (dir === -1 ? 6 : 1)));
-      const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
-
-      return (isForward && toPiece === "") || isDiagonal;
+      const dir = fromPiece.endsWith("w") ? -1 : 1;
+      return Math.abs(colDiff) === 1 && rowDiff === dir;
     default:
       return false;
   }
+}
+
+function validateMove(fromSquare, toSquare) {
+  const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
+  const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
+  const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
+  const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
+
+  if (fromRow === toRow && fromCol === toCol) return false;
+
+  const fromPiece = chessboardState[fromRow][fromCol];
+  const toPiece = chessboardState[toRow][toCol];
+
+  const pieceType = fromPiece.charAt(0);
+  const fromColor = fromPiece.charAt(1);
+
+  if (fromColor !== currentTurn) return false;
+
+  if (toPiece !== "") {
+    const toColor = toPiece.charAt(1);
+
+    if (fromColor === toColor) {
+      return false;
+    }
+
+    if (toPiece.charAt(0) === "K") {
+      return false;
+    }
+  }
+
+  let moveLooksValid = false;
+
+  if (pieceType === "P") {
+    const dir = fromPiece.endsWith("w") ? -1 : 1;
+    const rDiff = toRow - fromRow;
+    const cDiff = Math.abs(toCol - fromCol);
+    const isForward =
+      cDiff === 0 &&
+      (rDiff === dir ||
+        (rDiff === dir * 2 &&
+          fromRow === (dir === -1 ? 6 : 1) &&
+          !isBlocked(fromRow, fromCol, toRow, toCol)));
+    const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
+
+    moveLooksValid = (isForward && toPiece === "") || isDiagonal;
+  } else {
+    moveLooksValid = canPieceAttack(fromRow, fromCol, toRow, toCol);
+  }
+
+  if (!moveLooksValid) return false;
+
+  const originalFromPiece = chessboardState[fromRow][fromCol];
+  const originalToPiece = chessboardState[toRow][toCol];
+
+  chessboardState[toRow][toCol] = originalFromPiece;
+  chessboardState[fromRow][fromCol] = "";
+
+  let isInCheck;
+
+  try {
+    const kingPos = findKing(fromColor);
+
+    if (!kingPos) return false;
+
+    const enemyColor = fromColor === "w" ? "b" : "w";
+    isInCheck = isSquareAttacked(kingPos.row, kingPos.col, enemyColor);
+  } finally {
+    chessboardState[fromRow][fromCol] = originalFromPiece;
+    chessboardState[toRow][toCol] = originalToPiece;
+  }
+
+  return !isInCheck;
 }
 
 function movePiece(fromSquare, toSquare) {
@@ -352,6 +420,22 @@ function movePiece(fromSquare, toSquare) {
   drawMaterial();
 
   currentTurn = currentTurn === "w" ? "b" : "w";
+
+  document.querySelectorAll(".square.in-check").forEach((sq) => {
+    sq.classList.remove("in-check");
+  });
+
+  const kingPos = findKing(currentTurn);
+  const attackerColor = currentTurn === "w" ? "b" : "w";
+
+  if (kingPos && isSquareAttacked(kingPos.row, kingPos.col, attackerColor)) {
+    const kingSquare = document.querySelector(
+      `[data-row="${kingPos.row}"][data-col="${kingPos.col}"]`,
+    );
+    if (kingSquare) {
+      kingSquare.classList.add("in-check");
+    }
+  }
 
   const indicatorText = currentTurn === "w" ? "White to Move" : "Black to Move";
 
