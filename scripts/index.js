@@ -67,6 +67,9 @@ function startGame() {
   drawMaterial();
 
   whiteInfoBar.classList.add("active");
+  blackInfoBar.classList.remove("active");
+
+  turnIndicator.textContent = "White to Move";
 
   squares = document.querySelectorAll(".square");
 }
