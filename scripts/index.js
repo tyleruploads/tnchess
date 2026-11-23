@@ -301,7 +301,8 @@ function validateMove(fromSquare, toSquare) {
         (rDiff === dir ||
           (rDiff === dir * 2 && fromRow === (dir === -1 ? 6 : 1)));
       const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
-      return isForward || isDiagonal;
+
+      return (isForward && toPiece === "") || isDiagonal;
     default:
       return false;
   }
