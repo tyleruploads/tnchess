@@ -241,6 +241,18 @@ function clearHighlights() {
   });
 }
 
+function isBlocked(fromRow, fromCol, toRow, toCol) {
+  const rowStep = Math.sign(toRow - fromRow);
+  const colStep = Math.sign(toCol - fromCol);
+  const steps = Math.max(Math.abs(toRow - fromRow), Math.abs(toCol - fromCol));
+
+  return Array.from(
+    { length: steps - 1 },
+    (_, i) =>
+      chessboardState[fromRow + (i + 1) * rowStep][fromCol + (i + 1) * colStep],
+  ).some(Boolean);
+}
+
 function validateMove(fromSquare, toSquare) {
   const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
   const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
@@ -276,9 +288,15 @@ function validateMove(fromSquare, toSquare) {
 
   switch (pieceType) {
     case "R":
-      return rowDiff === 0 || colDiff === 0;
+      return (
+        (rowDiff === 0 || colDiff === 0) &&
+        !isBlocked(fromRow, fromCol, toRow, toCol)
+      );
     case "B":
-      return Math.abs(rowDiff) === Math.abs(colDiff);
+      return (
+        Math.abs(rowDiff) === Math.abs(colDiff) &&
+        !isBlocked(fromRow, fromCol, toRow, toCol)
+      );
     case "N":
       return (
         (Math.abs(rowDiff) === 2 && Math.abs(colDiff) === 1) ||
@@ -286,9 +304,10 @@ function validateMove(fromSquare, toSquare) {
       );
     case "Q":
       return (
-        rowDiff === 0 ||
-        colDiff === 0 ||
-        Math.abs(rowDiff) === Math.abs(colDiff)
+        (rowDiff === 0 ||
+          colDiff === 0 ||
+          Math.abs(rowDiff) === Math.abs(colDiff)) &&
+        !isBlocked(fromRow, fromCol, toRow, toCol)
       );
     case "K":
       return Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1;
