@@ -233,8 +233,17 @@ function drawMaterial() {
     }
   }
 
-  whiteNetMaterialEl.textContent = points["white"] - points["black"];
-  blackNetMaterialEl.textContent = points["black"] - points["white"];
+  const formatter = new Intl.NumberFormat("en-US", {
+    signDisplay: "exceptZero",
+    useGrouping: false,
+  });
+
+  whiteNetMaterialEl.textContent = formatter.format(
+    points["white"] - points["black"],
+  );
+  blackNetMaterialEl.textContent = formatter.format(
+    points["black"] - points["white"],
+  );
 }
 
 function clearHighlights() {
