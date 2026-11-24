@@ -282,6 +282,45 @@ function isSquareAttacked(row, col, enemyColor) {
   return false;
 }
 
+function isCheck(defenderColor) {
+  const kingPos = findKing(defenderColor);
+
+  if (!kingPos) return false;
+
+  const enemyColor = defenderColor === "w" ? "b" : "w";
+  return isSquareAttacked(kingPos.row, kingPos.col, enemyColor);
+}
+
+function isCheckmate(defenderColor) {
+  const kingPos = findKing(defenderColor);
+  const enemyColor = defenderColor === "w" ? "b" : "w";
+
+  if (!kingPos) return false;
+
+  if (!isSquareAttacked(kingPos.row, kingPos.col, enemyColor)) return false;
+
+  for (let pieceR = 0; pieceR < 8; pieceR++) {
+    for (let pieceC = 0; pieceC < 8; pieceC++) {
+      const piece = chessboardState[pieceR][pieceC];
+      if (!piece || piece[1] !== defenderColor) continue;
+      const fromSquare = document.querySelector(
+        `[data-row="${pieceR}"][data-col="${pieceC}"]`,
+      );
+
+      for (let targetR = 0; targetR < 8; targetR++) {
+        for (let targetC = 0; targetC < 8; targetC++) {
+          const toSquare = document.querySelector(
+            `[data-row="${targetR}"][data-col="${targetC}"]`,
+          );
+          if (validateMove(fromSquare, toSquare)) return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
 function canPieceAttack(fromRow, fromCol, toRow, toCol) {
   const rowDiff = toRow - fromRow;
   const colDiff = toCol - fromCol;
@@ -384,12 +423,7 @@ function validateMove(fromSquare, toSquare) {
   let isInCheck;
 
   try {
-    const kingPos = findKing(fromColor);
-
-    if (!kingPos) return false;
-
-    const enemyColor = fromColor === "w" ? "b" : "w";
-    isInCheck = isSquareAttacked(kingPos.row, kingPos.col, enemyColor);
+    isInCheck = isCheck(fromColor);
   } finally {
     chessboardState[fromRow][fromCol] = originalFromPiece;
     chessboardState[toRow][toCol] = originalToPiece;
@@ -440,10 +474,30 @@ function movePiece(fromSquare, toSquare) {
     }
   }
 
+  if (isCheckmate(currentTurn)) {
+    showEndDialog(
+      "Checkmate!",
+      `${attackerColor == "w" ? "White" : "Black"} wins!`,
+    );
+
+    whiteInfoBar.classList.remove("active");
+    blackInfoBar.classList.remove("active");
+
+    turnIndicator.textContent = "Checkmate!";
+
+    return;
+  }
+
   const indicatorText = currentTurn === "w" ? "White to Move" : "Black to Move";
 
   whiteInfoBar.classList.toggle("active", currentTurn === "w");
   blackInfoBar.classList.toggle("active", currentTurn === "b");
 
   turnIndicator.textContent = indicatorText;
+}
+
+function showEndDialog(title, reason) {
+  document.getElementById("game-over-title").textContent = title;
+  document.getElementById("game-over-reason").textContent = reason;
+  document.getElementById("game-over-dialog").showModal();
 }
