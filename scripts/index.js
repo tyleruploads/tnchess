@@ -496,7 +496,9 @@ function movePiece(fromSquare, toSquare) {
   currentTurn = currentTurn === "w" ? "b" : "w";
 
   const isCapture = Boolean(toPieceCode && toPieceCode[1] !== fromPieceCode[1]);
-  addToMoveTable(fromSquare, fromPieceCode, toSquare, isCapture);
+
+  const SAN = toSAN(fromSquare, fromPieceCode, toSquare, isCapture);
+  addToMoveTable(SAN);
 
   document.querySelectorAll(".square.in-check").forEach((sq) => {
     sq.classList.remove("in-check");
@@ -547,9 +549,7 @@ function movePiece(fromSquare, toSquare) {
   turnIndicator.textContent = indicatorText;
 }
 
-function addToMoveTable(fromSquare, fromPieceCode, toSquare, isCapture) {
-  const SAN = toSAN(fromSquare, fromPieceCode, toSquare, isCapture);
-
+function addToMoveTable(SAN) {
   const moveEl = document.createElement("div");
   moveEl.className = "move";
   moveEl.textContent = SAN;
