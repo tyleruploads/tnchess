@@ -24,6 +24,7 @@ let squares = null;
 let selectedSquare = null;
 
 let chessboardState = null;
+let posHistory = new Map();
 
 let whiteCapturedPieces = [];
 let blackCapturedPieces = [];
@@ -51,6 +52,19 @@ const PIECE_VALUES = {
   Q: 9,
 };
 
+function posString() {
+  const boardStr = chessboardState
+    .map((row) => row.map((cell) => cell || ".").join(""))
+    .join("/");
+  return `${boardStr} ${currentTurn}`;
+}
+
+function initHistory() {
+  posHistory.clear();
+  const startStr = posString();
+  posHistory.set(startStr, 1);
+}
+
 function startGame() {
   chessboardState = [
     ["Rb", "Nb", "Bb", "Qb", "Kb", "Bb", "Nb", "Rb"],
@@ -59,6 +73,7 @@ function startGame() {
     Array(8).fill("Pw"),
     ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
   ];
+  initHistory();
   moveList.innerHTML = "";
   currentTurn = "w";
   whiteCapturedPieces = [];
@@ -498,7 +513,7 @@ function movePiece(fromSquare, toSquare) {
   const isCapture = Boolean(toPieceCode && toPieceCode[1] !== fromPieceCode[1]);
 
   const SAN = toSAN(fromSquare, fromPieceCode, toSquare, isCapture);
-  addToMoveTable(SAN);
+  const threefoldRepetition = recordMoveAndHandleReps(SAN);
 
   document.querySelectorAll(".square.in-check").forEach((sq) => {
     sq.classList.remove("in-check");
@@ -541,12 +556,37 @@ function movePiece(fromSquare, toSquare) {
     return;
   }
 
+  if (threefoldRepetition) {
+    showEndDialog(
+      "Threefold Repetition!",
+      "The same position has occurred three times throughout entire the game! It is a tie!",
+    );
+
+    whiteInfoBar.classList.remove("active");
+    blackInfoBar.classList.remove("active");
+
+    turnIndicator.textContent = "Threefold Repetition!";
+
+    return;
+  }
+
   const indicatorText = currentTurn === "w" ? "White to Move" : "Black to Move";
 
   whiteInfoBar.classList.toggle("active", currentTurn === "w");
   blackInfoBar.classList.toggle("active", currentTurn === "b");
 
   turnIndicator.textContent = indicatorText;
+}
+
+function recordMoveAndHandleReps(SAN) {
+  addToMoveTable(SAN);
+
+  const currentPosStr = posString();
+  const count = (posHistory.get(currentPosStr) || 0) + 1;
+
+  posHistory.set(currentPosStr, count);
+
+  return count >= 3;
 }
 
 function addToMoveTable(SAN) {
