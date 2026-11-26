@@ -265,6 +265,59 @@ h1 {
   cursor: pointer;
 }
 
+.move-list {
+  display: grid;
+  grid-template-columns: 3rem minmax(min-content, 1fr) minmax(min-content, 1fr);
+  align-content: start;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  gap: 4px 8px;
+  margin: 20px;
+  counter-reset: move-number;
+  font-family: sans-serif;
+}
+
+.move-list:empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  color: #777;
+  font-style: italic;
+}
+
+.move-list:empty::before {
+  content: "No moves yet!";
+}
+
+.move:nth-child(odd) {
+  counter-increment: move-number;
+  grid-column: 2;
+}
+
+.move:nth-child(even) {
+  grid-column: 3;
+}
+
+.move:nth-child(even) .move-number {
+  display: none;
+}
+
+.move-number {
+  float: left;
+  width: 3rem;
+  margin-left: calc(-3rem - 8px);
+  text-align: right;
+  color: #888;
+  user-select: text;
+  white-space: nowrap;
+}
+
+.move-number::before {
+  content: counter(move-number);
+}
+
 @media (max-width: 768px) {
   .horizontal-align {
     flex-direction: column;

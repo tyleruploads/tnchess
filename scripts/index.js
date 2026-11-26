@@ -1,5 +1,6 @@
 const chessboardDiv = document.getElementById("chessboard");
 const newGameButton = document.getElementById("newGameButton");
+const moveList = document.getElementById("moves");
 const turnIndicator = document.querySelector("#turn-indicator > span");
 
 const whiteInfoBar = document.querySelector(".player-info.white-player");
@@ -58,6 +59,7 @@ function startGame() {
     Array(8).fill("Pw"),
     ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
   ];
+  moveList.innerHTML = "";
   currentTurn = "w";
   whiteCapturedPieces = [];
   blackCapturedPieces = [];
@@ -472,6 +474,7 @@ function movePiece(fromSquare, toSquare) {
   const toRow = parseInt(toSquare.getAttribute("data-row"), 10);
   const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
 
+  const fromPieceCode = chessboardState[fromRow][fromCol];
   const toPieceCode = chessboardState[toRow][toCol];
 
   if (toPieceCode) {
@@ -491,6 +494,9 @@ function movePiece(fromSquare, toSquare) {
   drawMaterial();
 
   currentTurn = currentTurn === "w" ? "b" : "w";
+
+  const isCapture = Boolean(toPieceCode && toPieceCode[1] !== fromPieceCode[1]);
+  addToMoveTable(fromSquare, fromPieceCode, toSquare, isCapture);
 
   document.querySelectorAll(".square.in-check").forEach((sq) => {
     sq.classList.remove("in-check");
@@ -539,6 +545,41 @@ function movePiece(fromSquare, toSquare) {
   blackInfoBar.classList.toggle("active", currentTurn === "b");
 
   turnIndicator.textContent = indicatorText;
+}
+
+function addToMoveTable(fromSquare, fromPieceCode, toSquare, isCapture) {
+  const SAN = toSAN(fromSquare, fromPieceCode, toSquare, isCapture);
+
+  const moveEl = document.createElement("div");
+  moveEl.className = "move";
+  moveEl.textContent = SAN;
+
+  // Content of move number element is handled in CSS
+  const numEl = document.createElement("span");
+  numEl.classList.add("move-number");
+  moveEl.appendChild(numEl);
+
+  moveList.appendChild(moveEl);
+}
+
+function toSAN(fromSquare, fromPieceCode, toSquare, isCapture) {
+  const fromRow = fromSquare.getAttribute("data-row");
+  const fromCol = fromSquare.getAttribute("data-col");
+  const fromSquareCode = fromSquare.getAttribute("data-notation");
+
+  const toRow = toSquare.getAttribute("data-row");
+  const toCol = toSquare.getAttribute("data-col");
+  const toSquareCode = toSquare.getAttribute("data-notation");
+
+  const targetPieceCode = chessboardState[toRow][toCol];
+
+  const pieceType = fromPieceCode[0];
+  const prefix =
+    pieceType === "P" ? (isCapture ? fromSquareCode[0] : "") : pieceType;
+  const captureSign = isCapture ? "x" : "";
+  const suffix =
+    (isCheckmate(currentTurn) && "#") || (isCheck(currentTurn) && "+") || "";
+  return prefix + captureSign + toSquareCode + suffix;
 }
 
 function showEndDialog(title, reason) {
