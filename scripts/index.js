@@ -330,6 +330,31 @@ function isCheckmate(defenderColor) {
   return true;
 }
 
+function isStalemate() {
+  if (isCheck(currentTurn)) return false;
+
+  for (let pieceR = 0; pieceR < 8; pieceR++) {
+    for (let pieceC = 0; pieceC < 8; pieceC++) {
+      const piece = chessboardState[pieceR][pieceC];
+      if (!piece || piece[1] !== currentTurn) continue;
+      const fromSquare = document.querySelector(
+        `[data-row="${pieceR}"][data-col="${pieceC}"]`,
+      );
+
+      for (let targetR = 0; targetR < 8; targetR++) {
+        for (let targetC = 0; targetC < 8; targetC++) {
+          const toSquare = document.querySelector(
+            `[data-row="${targetR}"][data-col="${targetC}"]`,
+          );
+          if (validateMove(fromSquare, toSquare)) return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
 function canPieceAttack(fromRow, fromCol, toRow, toCol) {
   const rowDiff = toRow - fromRow;
   const colDiff = toCol - fromCol;
@@ -493,6 +518,17 @@ function movePiece(fromSquare, toSquare) {
     blackInfoBar.classList.remove("active");
 
     turnIndicator.textContent = "Checkmate!";
+
+    return;
+  }
+
+  if (isStalemate(currentTurn)) {
+    showEndDialog("Stalemate!", "It's a tie!");
+
+    whiteInfoBar.classList.remove("active");
+    blackInfoBar.classList.remove("active");
+
+    turnIndicator.textContent = "Stalemate!";
 
     return;
   }
