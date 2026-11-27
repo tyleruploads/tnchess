@@ -52,11 +52,19 @@ const PIECE_VALUES = {
   Q: 9,
 };
 
+let castlingRights = {
+  wK: true,
+  wQ: true,
+  bK: true,
+  bQ: true,
+};
+
 function posString() {
   const boardStr = chessboardState
     .map((row) => row.map((cell) => cell || ".").join(""))
     .join("/");
-  return `${boardStr} ${currentTurn}`;
+  const castlingRightsStr = Object.values(castlingRights).map(Number).join("");
+  return `${boardStr} ${currentTurn} ${castlingRightsStr}`;
 }
 
 function initHistory() {
@@ -73,6 +81,13 @@ function startGame() {
     Array(8).fill("Pw"),
     ["Rw", "Nw", "Bw", "Qw", "Kw", "Bw", "Nw", "Rw"],
   ];
+  castlingRights = {
+    wK: true,
+    wQ: true,
+    bK: true,
+    bQ: true,
+  };
+
   initHistory();
   moveList.innerHTML = "";
   currentTurn = "w";
@@ -459,6 +474,10 @@ function validateMove(fromSquare, toSquare) {
     const isDiagonal = cDiff === 1 && rDiff === dir && toPiece !== "";
 
     moveLooksValid = (isForward && toPiece === "") || isDiagonal;
+  } else if (pieceType === "K") {
+    moveLooksValid =
+      canPieceAttack(fromRow, fromCol, toRow, toCol) ||
+      isValidCastle(fromRow, fromCol, toRow, toCol, fromColor);
   } else {
     moveLooksValid = canPieceAttack(fromRow, fromCol, toRow, toCol);
   }
@@ -483,6 +502,69 @@ function validateMove(fromSquare, toSquare) {
   return !isInCheck;
 }
 
+function isValidCastle(fromRow, fromCol, toRow, toCol, color) {
+  const homeRow = color === "w" ? 7 : 0;
+  if (fromRow !== homeRow || fromCol !== 4) return false;
+
+  const rDiff = toRow - fromRow;
+  const cDiff = Math.abs(toCol - fromCol);
+
+  if (rDiff !== 0 || cDiff !== 2) return false;
+
+  const isKingside = toCol > fromCol;
+
+  const side = isKingside ? "K" : "Q";
+  const hasRights = castlingRights[color + side];
+
+  if (!hasRights) return false;
+
+  const rookCol = isKingside ? 7 : 0;
+  const stepDir = isKingside ? 1 : -1;
+
+  const expectedRook = `R${color}`;
+  if (chessboardState[fromRow][rookCol] !== expectedRook) return false;
+
+  if (isBlocked(fromRow, fromCol, fromRow, rookCol)) return false;
+
+  const enemyColor = color === "w" ? "b" : "w";
+
+  return (
+    !isSquareAttacked(fromRow, fromCol, enemyColor) &&
+    !isSquareAttacked(fromRow, fromCol + stepDir, enemyColor) &&
+    !isSquareAttacked(fromRow, toCol, enemyColor)
+  );
+}
+
+function applyCastle(fromRow, fromCol, toRow, toCol) {
+  const isKingside = toCol > fromCol;
+  const rookCol = isKingside ? 7 : 0;
+  const stepDir = isKingside ? 1 : -1;
+
+  // Moves king
+  chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
+  chessboardState[fromRow][fromCol] = "";
+
+  // Moves rook
+  chessboardState[toRow][toCol - stepDir] = chessboardState[fromRow][rookCol];
+  chessboardState[fromRow][rookCol] = "";
+}
+
+function updateCastlingRights(from, to) {
+  if (from === "e1" || to === "e1") {
+    castlingRights.wK = false;
+    castlingRights.wQ = false;
+  }
+  if (from === "h1" || to === "h1") castlingRights.wK = false;
+  if (from === "a1" || to === "a1") castlingRights.wQ = false;
+
+  if (from === "e8" || to === "e8") {
+    castlingRights.bK = false;
+    castlingRights.bQ = false;
+  }
+  if (from === "h8" || to === "h8") castlingRights.bK = false;
+  if (from === "a8" || to === "a8") castlingRights.bQ = false;
+}
+
 function movePiece(fromSquare, toSquare) {
   const fromRow = parseInt(fromSquare.getAttribute("data-row"), 10);
   const fromCol = parseInt(fromSquare.getAttribute("data-col"), 10);
@@ -490,20 +572,30 @@ function movePiece(fromSquare, toSquare) {
   const toCol = parseInt(toSquare.getAttribute("data-col"), 10);
 
   const fromPieceCode = chessboardState[fromRow][fromCol];
+  const fromPieceColor = chessboardState[fromRow][fromCol].charAt(1);
   const toPieceCode = chessboardState[toRow][toCol];
 
-  if (toPieceCode) {
-    const toPieceType = toPieceCode.charAt(0);
-    const toPieceColor = toPieceCode.charAt(1);
+  const fromSquareNotation = getNotation(fromRow, fromCol);
+  const toSquareNotation = getNotation(toRow, toCol);
 
-    const capturedPieces =
-      toPieceColor === "w" ? blackCapturedPieces : whiteCapturedPieces;
+  if (isValidCastle(fromRow, fromCol, toRow, toCol, fromPieceColor)) {
+    applyCastle(fromRow, fromCol, toRow, toCol);
+  } else {
+    if (toPieceCode) {
+      const toPieceType = toPieceCode.charAt(0);
+      const toPieceColor = toPieceCode.charAt(1);
 
-    capturedPieces.push(toPieceType);
+      const capturedPieces =
+        toPieceColor === "w" ? blackCapturedPieces : whiteCapturedPieces;
+
+      capturedPieces.push(toPieceType);
+    }
+
+    chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
+    chessboardState[fromRow][fromCol] = "";
   }
 
-  chessboardState[toRow][toCol] = chessboardState[fromRow][fromCol];
-  chessboardState[fromRow][fromCol] = "";
+  updateCastlingRights(fromSquareNotation, toSquareNotation);
 
   drawPieces();
   drawMaterial();
@@ -610,8 +702,6 @@ function toSAN(fromSquare, fromPieceCode, toSquare, isCapture) {
   const toRow = toSquare.getAttribute("data-row");
   const toCol = toSquare.getAttribute("data-col");
   const toSquareCode = toSquare.getAttribute("data-notation");
-
-  const targetPieceCode = chessboardState[toRow][toCol];
 
   const pieceType = fromPieceCode[0];
   const prefix =
