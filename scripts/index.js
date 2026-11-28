@@ -251,6 +251,8 @@ function drawMaterial() {
     container.replaceChildren();
     if (pieces === null) continue;
 
+    pieces.sort((a, b) => PIECE_VALUES[a] - PIECE_VALUES[b]);
+
     let pointsTarget = type === "dark-piece" ? "white" : "black";
 
     points[pointsTarget] = getMaterialValue(pieces);
